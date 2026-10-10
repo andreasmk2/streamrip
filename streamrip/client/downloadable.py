@@ -54,12 +54,17 @@ async def fast_async_download(path, url, headers, callback):
             allow_redirects=True,
             stream=True,
         ) as resp:
+            resp.raise_for_status()
             for chunk in resp.iter_content(chunk_size=chunk_size):
                 file.write(chunk)
                 callback(len(chunk))
                 if counter % yield_every == 0:
                     await asyncio.sleep(0)
                 counter += 1
+
+    if counter == 0:
+        os.remove(path)
+        raise NonStreamableError(f"Empty response from {url}")
 
 
 @dataclass(slots=True)
